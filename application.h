@@ -21,7 +21,7 @@ public:
 
 private:
 
-    unsigned int VertexArrayObjects, VertexBufferObjects, ElementBufferObjects;
+    unsigned int vertexArrayObjects, vertexBufferObjects, elementBufferObjects;
 
     GLFWwindow* window;
 
@@ -31,18 +31,19 @@ private:
 
     static void zoomCallback(GLFWwindow* window, double xoffset, double yoffset);
 
-    static void movmentCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+    static void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 
-    void moveCamera(float xoffset, float yoffset);
+    void moveCamera();
 
     void initApplication();
 
     void zoom(float zoomAmount);
 
-    float zoomAmount = 1.0f;
+    float scale = 1.0f;
 
-    float cameraPosX = 0;
-    float cameraPosY = 0;
+    float xoffset, yoffset;
 
-    bool isMoving = false;
+    double mousePosX = 0, mousePosY = 0;
+
+    bool isMoved = false;
 };

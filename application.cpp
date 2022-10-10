@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <future>
+#include <math.h>
 
 #include "debug.h"
 
@@ -12,9 +13,9 @@ Application::Application() {
 }
 
 Application::~Application() {
-	glDeleteVertexArrays(1, &VertexArrayObjects);
-	glDeleteBuffers(1, &VertexBufferObjects);
-	glDeleteBuffers(1, &ElementBufferObjects);
+	glDeleteVertexArrays(1, &vertexArrayObjects);
+	glDeleteBuffers(1, &vertexBufferObjects);
+	glDeleteBuffers(1, &elementBufferObjects);
 
 	glfwTerminate();
 }
@@ -44,13 +45,16 @@ void Application::run() {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		shader.useShader();
-		glBindVertexArray(VertexArrayObjects);
+		glBindVertexArray(vertexArrayObjects);
 
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
-
+		if (isMoved) {
+			moveCamera();
+		}
+		glfwGetCursorPos(window, &mousePosX, &mousePosY);
 	}
 }
 
@@ -66,29 +70,19 @@ void Application::zoomCallback(GLFWwindow* window, double xoffset, double yoffse
 	appliction->zoom(yoffset);
 }
 
-void Application::movmentCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-	
+void Application::mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
 	auto application = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
-
-	float zoom = application->zoomAmount;
-	switch (key)
-	{
-	case GLFW_KEY_RIGHT:
-		application->cameraPosX += (0.01 * zoom);
-		application->moveCamera(application->cameraPosX, application->cameraPosY);
-		break;
-	case GLFW_KEY_LEFT:
-		application->cameraPosX -= (0.01 * zoom);
-		application->moveCamera(application->cameraPosX, application->cameraPosY);
-		break;
-	case GLFW_KEY_DOWN:
-		application->cameraPosY -= (0.01 * zoom);
-		application->moveCamera(application->cameraPosX, application->cameraPosY);
-		break;
-	case GLFW_KEY_UP:
-		application->cameraPosY += (0.01 * zoom);
-		application->moveCamera(application->cameraPosX, application->cameraPosY);
-		break;
+	if (button == GLFW_MOUSE_BUTTON_LEFT) {
+		switch (action)
+		{
+		case GLFW_PRESS:
+			application->isMoved = true;
+			break;
+		case GLFW_RELEASE:
+			application->isMoved = false;
+			//glfwGetCursorPos(window, &application->mousePosX, &application->mousePosY);
+			break;
+		}
 	}
 }
 
@@ -119,18 +113,18 @@ void Application::initApplication() {
 	glViewport(0, 0, width, height);
 	glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
 	glfwSetScrollCallback(window, zoomCallback);
-	glfwSetKeyCallback(window, movmentCallback);
+	glfwSetMouseButtonCallback(window, mouseButtonCallback);
 
-	glGenVertexArrays(1, &VertexArrayObjects);
-	glGenBuffers(1, &VertexBufferObjects);
-	glGenBuffers(1, &ElementBufferObjects);
+	glGenVertexArrays(1, &vertexArrayObjects);
+	glGenBuffers(1, &vertexBufferObjects);
+	glGenBuffers(1, &elementBufferObjects);
 
-	glBindVertexArray(VertexArrayObjects);
+	glBindVertexArray(vertexArrayObjects);
 
-	glBindBuffer(GL_ARRAY_BUFFER, VertexBufferObjects);
+	glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObjects);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ElementBufferObjects);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBufferObjects);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
@@ -146,18 +140,25 @@ void Application::initApplication() {
 
 void Application::zoom(float direction) {
 	if (direction < 0) {
-		zoomAmount += 0.02;
-		shader.setUniformShaderFloat("zoom", zoomAmount);
+		scale += 0.015;
+		shader.setUniformShaderFloat("zoom", scale);
 	}
 	else {
-		zoomAmount -= 0.02;
-		shader.setUniformShaderFloat("zoom", zoomAmount);
+		scale -= 0.015;
+		shader.setUniformShaderFloat("zoom", scale);
 	}
-
 }
 
-void Application::moveCamera(float xoffset, float yoffset) {
+void Application::moveCamera() {
+	double currentPosX , currentPosY;
+	float differenceX, differenceY;
+	glfwGetCursorPos(window, &currentPosX, &currentPosY);
+	
+	differenceX = currentPosX - mousePosX;
+	differenceY = currentPosY - mousePosY;
 
+	xoffset -= differenceX / 1.0f / width;
+	yoffset += differenceY / 1.0f / height;
 	shader.setUniformShaderFloat("xoffset", xoffset);
 	shader.setUniformShaderFloat("yoffset", yoffset);
 }

@@ -11,8 +11,8 @@ uniform float yoffset = 0;
  
 int get_iterations()
 {
-    float real = ((gl_FragCoord.x / 1080.0 - 0.5) * zoom + xoffset) * 2.5;
-    float imag = ((gl_FragCoord.y / 1080.0 - 0.5) * zoom + yoffset) * 2.5;
+    float real = ((gl_FragCoord.x / 1080.0 - 0.5) * zoom + xoffset);
+    float imag = ((gl_FragCoord.y / 1080.0 - 0.5) * zoom + yoffset);
  
     int iterations = 0;
     float const_real = real;
